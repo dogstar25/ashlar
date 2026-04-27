@@ -3,14 +3,27 @@ using UnityEngine;
 public class Brick : MonoBehaviour
 {
     [Header("Visuals")]
-    [SerializeField] private Renderer triangleARenderer;
-    [SerializeField] private Renderer triangleBRenderer;
+    [SerializeField] private Renderer triangleTopRenderer;
+    [SerializeField] private Renderer triangleRightRenderer;
+    [SerializeField] private Renderer triangleBottomRenderer;
+    [SerializeField] private Renderer triangleLeftRenderer;
 
     [Header("Colors")]
     [SerializeField] private BrickColorPalette colorPalette;
     [SerializeField] private bool randomizeColorsOnStart = true;
 
+    [Header("Current Side Colors")]
+    [SerializeField] private Color topColor = Color.white;
+    [SerializeField] private Color rightColor = Color.white;
+    [SerializeField] private Color bottomColor = Color.white;
+    [SerializeField] private Color leftColor = Color.white;
+
     private MaterialPropertyBlock propertyBlock;
+
+    public Color TopColor => topColor;
+    public Color RightColor => rightColor;
+    public Color BottomColor => bottomColor;
+    public Color LeftColor => leftColor;
 
     private void Awake()
     {
@@ -22,6 +35,10 @@ public class Brick : MonoBehaviour
         if (randomizeColorsOnStart)
         {
             RandomizeColors();
+        }
+        else
+        {
+            ApplyCurrentColors();
         }
     }
 
@@ -36,23 +53,69 @@ public class Brick : MonoBehaviour
             return;
         }
 
-        colorPalette.GetRandomColorPair(out Color colorA, out Color colorB);
-        SetColors(colorA, colorB);
+        colorPalette.GetRandomDistinctColorQuad(
+            out Color top,
+            out Color right,
+            out Color bottom,
+            out Color left);
+
+        SetColors(top, right, bottom, left);
     }
 
-    public void SetColors(Color colorA, Color colorB)
+    [ContextMenu("Apply Current Colors")]
+    public void ApplyCurrentColors()
     {
         EnsurePropertyBlockExists();
 
-        ApplyColor(triangleARenderer, colorA);
-        ApplyColor(triangleBRenderer, colorB);
+        ApplyColor(triangleTopRenderer, topColor, "Triangle Top Renderer");
+        ApplyColor(triangleRightRenderer, rightColor, "Triangle Right Renderer");
+        ApplyColor(triangleBottomRenderer, bottomColor, "Triangle Bottom Renderer");
+        ApplyColor(triangleLeftRenderer, leftColor, "Triangle Left Renderer");
     }
 
-    private void ApplyColor(Renderer targetRenderer, Color color)
+    public void SetColors(Color top, Color right, Color bottom, Color left)
+    {
+        topColor = top;
+        rightColor = right;
+        bottomColor = bottom;
+        leftColor = left;
+
+        ApplyCurrentColors();
+    }
+
+    public void RotateColorsClockwise()
+    {
+        Color oldTop = topColor;
+        Color oldRight = rightColor;
+        Color oldBottom = bottomColor;
+        Color oldLeft = leftColor;
+
+        SetColors(
+            oldLeft,
+            oldTop,
+            oldRight,
+            oldBottom);
+    }
+
+    public void RotateColorsCounterClockwise()
+    {
+        Color oldTop = topColor;
+        Color oldRight = rightColor;
+        Color oldBottom = bottomColor;
+        Color oldLeft = leftColor;
+
+        SetColors(
+            oldRight,
+            oldBottom,
+            oldLeft,
+            oldTop);
+    }
+
+    private void ApplyColor(Renderer targetRenderer, Color color, string rendererName)
     {
         if (targetRenderer == null)
         {
-            Debug.LogWarning($"{name} has a missing triangle renderer reference.");
+            Debug.LogWarning($"{name} has a missing {rendererName} reference.");
             return;
         }
 
