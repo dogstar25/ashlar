@@ -70,7 +70,7 @@ public class GameMenuController : MonoBehaviour
 
     public void ReturnToPauseMenu()
     {
-        //hudPanel.SetActive(false);
+        hudPanel.SetActive(false);
         pauseMenuPanel.SetActive(true);
         settingsPanel.SetActive(false);
         quitConfirmPanel.SetActive(false);
