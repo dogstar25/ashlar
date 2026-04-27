@@ -1,5 +1,9 @@
 using UnityEngine;
 
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
 [ExecuteAlways]
 public class BrickVisualBuilder : MonoBehaviour
 {
@@ -10,31 +14,68 @@ public class BrickVisualBuilder : MonoBehaviour
     [SerializeField] private float faceOffset = 0.003f;
 
     [Header("Child Names")]
-    [SerializeField] private string triangleAName = "TriangleA";
-    [SerializeField] private string triangleBName = "TriangleB";
+    [SerializeField] private string triangleTopName = "TriangleTop";
+    [SerializeField] private string triangleRightName = "TriangleRight";
+    [SerializeField] private string triangleBottomName = "TriangleBottom";
+    [SerializeField] private string triangleLeftName = "TriangleLeft";
 
     [Header("Material")]
     [SerializeField] private Material sharedMaterial;
 
     [Header("Options")]
     [SerializeField] private bool disableRootMeshRenderer = true;
+    [SerializeField] private bool deleteOldTwoTriangleVisuals = true;
 
-    [ContextMenu("Rebuild Triangle Visuals")]
-    public void RebuildTriangleVisuals()
+#if UNITY_EDITOR
+    private const string MeshFolderPath = "Assets/Generated/BrickMeshes";
+#endif
+
+    [ContextMenu("Rebuild Four Triangle Visuals")]
+    public void RebuildFourTriangleVisuals()
     {
-        DeleteChildIfExists(triangleAName);
-        DeleteChildIfExists(triangleBName);
+        if (deleteOldTwoTriangleVisuals)
+        {
+            DeleteChildIfExists("TriangleA");
+            DeleteChildIfExists("TriangleB");
+        }
 
-        Renderer triangleARenderer = CreateTriangleChild(triangleAName, CreateTriangleAMesh());
-        Renderer triangleBRenderer = CreateTriangleChild(triangleBName, CreateTriangleBMesh());
+        DeleteChildIfExists(triangleTopName);
+        DeleteChildIfExists(triangleRightName);
+        DeleteChildIfExists(triangleBottomName);
+        DeleteChildIfExists(triangleLeftName);
+
+        Mesh triangleTopMesh = CreateTopTriangleMesh();
+        Mesh triangleRightMesh = CreateRightTriangleMesh();
+        Mesh triangleBottomMesh = CreateBottomTriangleMesh();
+        Mesh triangleLeftMesh = CreateLeftTriangleMesh();
+
+#if UNITY_EDITOR
+        triangleTopMesh = SaveMeshAsset(triangleTopMesh, "BrickTriangleTop.asset");
+        triangleRightMesh = SaveMeshAsset(triangleRightMesh, "BrickTriangleRight.asset");
+        triangleBottomMesh = SaveMeshAsset(triangleBottomMesh, "BrickTriangleBottom.asset");
+        triangleLeftMesh = SaveMeshAsset(triangleLeftMesh, "BrickTriangleLeft.asset");
+#endif
+
+        Renderer topRenderer = CreateTriangleChild(triangleTopName, triangleTopMesh);
+        Renderer rightRenderer = CreateTriangleChild(triangleRightName, triangleRightMesh);
+        Renderer bottomRenderer = CreateTriangleChild(triangleBottomName, triangleBottomMesh);
+        Renderer leftRenderer = CreateTriangleChild(triangleLeftName, triangleLeftMesh);
 
         if (disableRootMeshRenderer && TryGetComponent<MeshRenderer>(out MeshRenderer rootRenderer))
         {
             rootRenderer.enabled = false;
         }
 
+#if UNITY_EDITOR
+        EditorUtility.SetDirty(gameObject);
+        EditorUtility.SetDirty(topRenderer.gameObject);
+        EditorUtility.SetDirty(rightRenderer.gameObject);
+        EditorUtility.SetDirty(bottomRenderer.gameObject);
+        EditorUtility.SetDirty(leftRenderer.gameObject);
+#endif
+
         Debug.Log(
-            $"Built triangle visuals for {name}. Assign {triangleARenderer.name} and {triangleBRenderer.name} to Brick.cs.",
+            $"Built four triangle visuals for {name}. Assign TriangleTop, TriangleRight, TriangleBottom, and TriangleLeft to Brick.cs.",
             this);
     }
 
@@ -61,26 +102,80 @@ public class BrickVisualBuilder : MonoBehaviour
         return meshRenderer;
     }
 
-    private Mesh CreateTriangleAMesh()
+    private Mesh CreateTopTriangleMesh()
     {
-        float left = -width * 0.5f;
-        float right = width * 0.5f;
-        float bottom = -height * 0.5f;
-        float top = height * 0.5f;
-        float z = -(depth * 0.5f + faceOffset);
+        GetFacePoints(
+            out Vector3 center,
+            out Vector3 topLeft,
+            out Vector3 topRight,
+            out Vector3 bottomRight,
+            out Vector3 bottomLeft);
 
-        Vector3 topLeft = new Vector3(left, top, z);
-        Vector3 bottomLeft = new Vector3(left, bottom, z);
-        Vector3 bottomRight = new Vector3(right, bottom, z);
+        return CreateTriangleMesh(
+            "Brick Triangle Top",
+            center,
+            topLeft,
+            topRight);
+    }
 
+    private Mesh CreateRightTriangleMesh()
+    {
+        GetFacePoints(
+            out Vector3 center,
+            out Vector3 topLeft,
+            out Vector3 topRight,
+            out Vector3 bottomRight,
+            out Vector3 bottomLeft);
+
+        return CreateTriangleMesh(
+            "Brick Triangle Right",
+            center,
+            topRight,
+            bottomRight);
+    }
+
+    private Mesh CreateBottomTriangleMesh()
+    {
+        GetFacePoints(
+            out Vector3 center,
+            out Vector3 topLeft,
+            out Vector3 topRight,
+            out Vector3 bottomRight,
+            out Vector3 bottomLeft);
+
+        return CreateTriangleMesh(
+            "Brick Triangle Bottom",
+            center,
+            bottomRight,
+            bottomLeft);
+    }
+
+    private Mesh CreateLeftTriangleMesh()
+    {
+        GetFacePoints(
+            out Vector3 center,
+            out Vector3 topLeft,
+            out Vector3 topRight,
+            out Vector3 bottomRight,
+            out Vector3 bottomLeft);
+
+        return CreateTriangleMesh(
+            "Brick Triangle Left",
+            center,
+            bottomLeft,
+            topLeft);
+    }
+
+    private Mesh CreateTriangleMesh(string meshName, Vector3 vertex0, Vector3 vertex1, Vector3 vertex2)
+    {
         Mesh mesh = new Mesh();
-        mesh.name = "Brick Triangle A";
+        mesh.name = meshName;
 
         mesh.vertices = new[]
         {
-            topLeft,
-            bottomRight,
-            bottomLeft
+            vertex0,
+            vertex1,
+            vertex2
         };
 
         mesh.triangles = new[]
@@ -97,9 +192,9 @@ public class BrickVisualBuilder : MonoBehaviour
 
         mesh.uv = new[]
         {
-            ToUV(topLeft),
-            ToUV(bottomRight),
-            ToUV(bottomLeft)
+            ToUV(vertex0),
+            ToUV(vertex1),
+            ToUV(vertex2)
         };
 
         mesh.RecalculateBounds();
@@ -107,7 +202,12 @@ public class BrickVisualBuilder : MonoBehaviour
         return mesh;
     }
 
-    private Mesh CreateTriangleBMesh()
+    private void GetFacePoints(
+        out Vector3 center,
+        out Vector3 topLeft,
+        out Vector3 topRight,
+        out Vector3 bottomRight,
+        out Vector3 bottomLeft)
     {
         float left = -width * 0.5f;
         float right = width * 0.5f;
@@ -115,42 +215,11 @@ public class BrickVisualBuilder : MonoBehaviour
         float top = height * 0.5f;
         float z = -(depth * 0.5f + faceOffset);
 
-        Vector3 topLeft = new Vector3(left, top, z);
-        Vector3 topRight = new Vector3(right, top, z);
-        Vector3 bottomRight = new Vector3(right, bottom, z);
-
-        Mesh mesh = new Mesh();
-        mesh.name = "Brick Triangle B";
-
-        mesh.vertices = new[]
-        {
-            topLeft,
-            topRight,
-            bottomRight
-        };
-
-        mesh.triangles = new[]
-        {
-            0, 1, 2
-        };
-
-        mesh.normals = new[]
-        {
-            Vector3.back,
-            Vector3.back,
-            Vector3.back
-        };
-
-        mesh.uv = new[]
-        {
-            ToUV(topLeft),
-            ToUV(topRight),
-            ToUV(bottomRight)
-        };
-
-        mesh.RecalculateBounds();
-
-        return mesh;
+        center = new Vector3(0f, 0f, z);
+        topLeft = new Vector3(left, top, z);
+        topRight = new Vector3(right, top, z);
+        bottomRight = new Vector3(right, bottom, z);
+        bottomLeft = new Vector3(left, bottom, z);
     }
 
     private Vector2 ToUV(Vector3 vertex)
@@ -194,4 +263,37 @@ public class BrickVisualBuilder : MonoBehaviour
 
         return material;
     }
+
+#if UNITY_EDITOR
+    private Mesh SaveMeshAsset(Mesh mesh, string assetFileName)
+    {
+        if (!AssetDatabase.IsValidFolder("Assets/Generated"))
+        {
+            AssetDatabase.CreateFolder("Assets", "Generated");
+        }
+
+        if (!AssetDatabase.IsValidFolder(MeshFolderPath))
+        {
+            AssetDatabase.CreateFolder("Assets/Generated", "BrickMeshes");
+        }
+
+        string assetPath = $"{MeshFolderPath}/{assetFileName}";
+
+        Mesh existingMesh = AssetDatabase.LoadAssetAtPath<Mesh>(assetPath);
+
+        if (existingMesh != null)
+        {
+            EditorUtility.CopySerialized(mesh, existingMesh);
+            EditorUtility.SetDirty(existingMesh);
+            AssetDatabase.SaveAssets();
+            return existingMesh;
+        }
+
+        AssetDatabase.CreateAsset(mesh, assetPath);
+        AssetDatabase.SaveAssets();
+        AssetDatabase.Refresh();
+
+        return AssetDatabase.LoadAssetAtPath<Mesh>(assetPath);
+    }
+#endif
 }

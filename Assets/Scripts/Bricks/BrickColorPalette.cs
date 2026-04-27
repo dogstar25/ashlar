@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(
@@ -56,22 +57,49 @@ public class BrickColorPalette : ScriptableObject
         return colors[index];
     }
 
-    public void GetRandomColorPair(out Color colorA, out Color colorB)
+    public void GetRandomDistinctColorQuad(
+        out Color top,
+        out Color right,
+        out Color bottom,
+        out Color left)
     {
-        colorA = GetRandomColor();
-        colorB = GetRandomColor();
-
-        if (colors == null || colors.Length < 2)
+        if (colors == null || colors.Length == 0)
         {
+            Debug.LogWarning("BrickColorPalette has no colors. Returning white for all brick sides.");
+
+            top = Color.white;
+            right = Color.white;
+            bottom = Color.white;
+            left = Color.white;
             return;
         }
 
-        int safetyCounter = 0;
-
-        while (colorB == colorA && safetyCounter < 10)
+        if (colors.Length < 4)
         {
-            colorB = GetRandomColor();
-            safetyCounter++;
+            Debug.LogWarning("BrickColorPalette needs at least 4 colors to create a brick with 4 different colors. Some colors may repeat.");
+
+            top = GetRandomColor();
+            right = GetRandomColor();
+            bottom = GetRandomColor();
+            left = GetRandomColor();
+            return;
         }
+
+        List<Color> availableColors = new List<Color>(colors);
+
+        top = TakeRandomColor(availableColors);
+        right = TakeRandomColor(availableColors);
+        bottom = TakeRandomColor(availableColors);
+        left = TakeRandomColor(availableColors);
+    }
+
+    private Color TakeRandomColor(List<Color> availableColors)
+    {
+        int index = Random.Range(0, availableColors.Count);
+        Color selectedColor = availableColors[index];
+
+        availableColors.RemoveAt(index);
+
+        return selectedColor;
     }
 }
