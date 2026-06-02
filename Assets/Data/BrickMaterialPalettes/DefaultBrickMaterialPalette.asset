@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87e578d8786ca47429e7d2293e2fe91b, type: 3}
+  m_Name: DefaultBrickMaterialPalette
+  m_EditorClassIdentifier: Assembly-CSharp::BrickMaterialPalette
+  materials:
+  - {fileID: 11400000, guid: e0ea7b544796e4648ba6f26eb503bee2, type: 2}
+  - {fileID: 11400000, guid: e98136b528cd5a04788ef4837366299b, type: 2}
