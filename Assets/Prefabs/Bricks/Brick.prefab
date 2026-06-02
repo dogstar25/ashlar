@@ -338,10 +338,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Brick
   triangleARenderer: {fileID: 7747364013757844540}
   triangleBRenderer: {fileID: 8397552852214417556}
-  colorPalette: {fileID: 11400000, guid: 0d36f5541d8fc2e4f886c968fb7fb716, type: 2}
-  randomizeColorsOnStart: 1
-  triangleAColor: {r: 1, g: 1, b: 1, a: 1}
-  triangleBColor: {r: 1, g: 1, b: 1, a: 1}
+  materialPalette: {fileID: 11400000, guid: aabde7ea5edacc34e82449d622d9cf1d, type: 2}
+  randomizeMaterialsOnStart: 1
+  triangleAMaterial: {fileID: 0}
+  triangleBMaterial: {fileID: 0}
 --- !u!114 &7465034332892916572
 MonoBehaviour:
   m_ObjectHideFlags: 0

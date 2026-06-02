@@ -6,18 +6,18 @@ public class Brick : MonoBehaviour
     [SerializeField] private Renderer triangleARenderer;
     [SerializeField] private Renderer triangleBRenderer;
 
-    [Header("Colors")]
-    [SerializeField] private BrickColorPalette colorPalette;
-    [SerializeField] private bool randomizeColorsOnStart = true;
+    [Header("Materials")]
+    [SerializeField] private BrickMaterialPalette materialPalette;
+    [SerializeField] private bool randomizeMaterialsOnStart = true;
 
-    [Header("Current Triangle Colors")]
-    [SerializeField] private Color triangleAColor = Color.white;
-    [SerializeField] private Color triangleBColor = Color.white;
+    [Header("Current Triangle Materials")]
+    [SerializeField] private BrickMaterialDefinition triangleAMaterial;
+    [SerializeField] private BrickMaterialDefinition triangleBMaterial;
 
     private MaterialPropertyBlock propertyBlock;
 
-    public Color TriangleAColor => triangleAColor;
-    public Color TriangleBColor => triangleBColor;
+    public BrickMaterialDefinition TriangleAMaterial => triangleAMaterial;
+    public BrickMaterialDefinition TriangleBMaterial => triangleBMaterial;
 
     private void Awake()
     {
@@ -26,66 +26,62 @@ public class Brick : MonoBehaviour
 
     private void Start()
     {
-        if (randomizeColorsOnStart)
+        if (randomizeMaterialsOnStart)
         {
-            RandomizeColors();
+            RandomizeMaterials();
         }
         else
         {
-            ApplyCurrentColors();
+            ApplyCurrentMaterials();
         }
     }
 
-    [ContextMenu("Randomize Colors")]
-    public void RandomizeColors()
+    [ContextMenu("Randomize Materials")]
+    public void RandomizeMaterials()
     {
         EnsurePropertyBlockExists();
 
-        if (colorPalette == null)
+        if (materialPalette == null)
         {
-            Debug.LogWarning($"{name} has no BrickColorPalette assigned.");
+            Debug.LogWarning($"{name} has no BrickMaterialPalette assigned.");
             return;
         }
 
-        colorPalette.GetRandomColorPair(out Color colorA, out Color colorB);
-        SetColors(colorA, colorB);
+        materialPalette.GetRandomMaterialPair(
+            out BrickMaterialDefinition materialA,
+            out BrickMaterialDefinition materialB);
+
+        SetMaterials(materialA, materialB);
     }
 
-    [ContextMenu("Apply Current Colors")]
-    public void ApplyCurrentColors()
+    [ContextMenu("Apply Current Materials")]
+    public void ApplyCurrentMaterials()
     {
         EnsurePropertyBlockExists();
 
-        ApplyColor(triangleARenderer, triangleAColor, "Triangle A Renderer");
-        ApplyColor(triangleBRenderer, triangleBColor, "Triangle B Renderer");
+        ApplyMaterial(triangleARenderer, triangleAMaterial, "Triangle A Renderer");
+        ApplyMaterial(triangleBRenderer, triangleBMaterial, "Triangle B Renderer");
     }
 
-    public void SetColors(Color colorA, Color colorB)
+    public void SetMaterials(
+        BrickMaterialDefinition materialA,
+        BrickMaterialDefinition materialB)
     {
-        triangleAColor = colorA;
-        triangleBColor = colorB;
+        triangleAMaterial = materialA;
+        triangleBMaterial = materialB;
 
-        ApplyCurrentColors();
+        ApplyCurrentMaterials();
     }
 
-    public void SwapTriangleColors()
+    public void SwapTriangleMaterials()
     {
-        SetColors(triangleBColor, triangleAColor);
+        SetMaterials(triangleBMaterial, triangleAMaterial);
     }
 
-    // Kept for compatibility in case anything still calls the old rotation-color methods.
-    public void RotateColorsClockwise()
-    {
-        SwapTriangleColors();
-    }
-
-    // Kept for compatibility in case anything still calls the old rotation-color methods.
-    public void RotateColorsCounterClockwise()
-    {
-        SwapTriangleColors();
-    }
-
-    private void ApplyColor(Renderer targetRenderer, Color color, string rendererName)
+    private void ApplyMaterial(
+        Renderer targetRenderer,
+        BrickMaterialDefinition brickMaterial,
+        string rendererName)
     {
         if (targetRenderer == null)
         {
@@ -93,10 +89,28 @@ public class Brick : MonoBehaviour
             return;
         }
 
+        if (brickMaterial == null)
+        {
+            Debug.LogWarning($"{name} has no material assigned for {rendererName}.");
+            return;
+        }
+
+        if (brickMaterial.HasVisualMaterial)
+        {
+            targetRenderer.sharedMaterial = brickMaterial.VisualMaterial;
+        }
+
+        ApplyMaterialColor(targetRenderer, brickMaterial.BaseColor);
+    }
+
+    private void ApplyMaterialColor(Renderer targetRenderer, Color color)
+    {
         targetRenderer.GetPropertyBlock(propertyBlock);
 
         propertyBlock.SetColor("_BaseColor", color);
         propertyBlock.SetColor("_Color", color);
+        propertyBlock.SetColor("_TintColor", color);
+        propertyBlock.SetColor("_EmissionColor", color);
 
         targetRenderer.SetPropertyBlock(propertyBlock);
     }
