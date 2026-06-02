@@ -100,7 +100,6 @@ public class BrickDragController : MonoBehaviour
     private void BeginPhysicsDrag()
     {
         selectedRigidbody.linearVelocity = Vector3.zero;
-        selectedRigidbody.angularVelocity = Vector3.zero;
 
         selectedRigidbody.useGravity = false;
         selectedRigidbody.isKinematic = true;
