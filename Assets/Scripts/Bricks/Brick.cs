@@ -3,27 +3,21 @@ using UnityEngine;
 public class Brick : MonoBehaviour
 {
     [Header("Visuals")]
-    [SerializeField] private Renderer triangleTopRenderer;
-    [SerializeField] private Renderer triangleRightRenderer;
-    [SerializeField] private Renderer triangleBottomRenderer;
-    [SerializeField] private Renderer triangleLeftRenderer;
+    [SerializeField] private Renderer triangleARenderer;
+    [SerializeField] private Renderer triangleBRenderer;
 
     [Header("Colors")]
     [SerializeField] private BrickColorPalette colorPalette;
     [SerializeField] private bool randomizeColorsOnStart = true;
 
-    [Header("Current Side Colors")]
-    [SerializeField] private Color topColor = Color.white;
-    [SerializeField] private Color rightColor = Color.white;
-    [SerializeField] private Color bottomColor = Color.white;
-    [SerializeField] private Color leftColor = Color.white;
+    [Header("Current Triangle Colors")]
+    [SerializeField] private Color triangleAColor = Color.white;
+    [SerializeField] private Color triangleBColor = Color.white;
 
     private MaterialPropertyBlock propertyBlock;
 
-    public Color TopColor => topColor;
-    public Color RightColor => rightColor;
-    public Color BottomColor => bottomColor;
-    public Color LeftColor => leftColor;
+    public Color TriangleAColor => triangleAColor;
+    public Color TriangleBColor => triangleBColor;
 
     private void Awake()
     {
@@ -53,13 +47,8 @@ public class Brick : MonoBehaviour
             return;
         }
 
-        colorPalette.GetRandomDistinctColorQuad(
-            out Color top,
-            out Color right,
-            out Color bottom,
-            out Color left);
-
-        SetColors(top, right, bottom, left);
+        colorPalette.GetRandomColorPair(out Color colorA, out Color colorB);
+        SetColors(colorA, colorB);
     }
 
     [ContextMenu("Apply Current Colors")]
@@ -67,48 +56,33 @@ public class Brick : MonoBehaviour
     {
         EnsurePropertyBlockExists();
 
-        ApplyColor(triangleTopRenderer, topColor, "Triangle Top Renderer");
-        ApplyColor(triangleRightRenderer, rightColor, "Triangle Right Renderer");
-        ApplyColor(triangleBottomRenderer, bottomColor, "Triangle Bottom Renderer");
-        ApplyColor(triangleLeftRenderer, leftColor, "Triangle Left Renderer");
+        ApplyColor(triangleARenderer, triangleAColor, "Triangle A Renderer");
+        ApplyColor(triangleBRenderer, triangleBColor, "Triangle B Renderer");
     }
 
-    public void SetColors(Color top, Color right, Color bottom, Color left)
+    public void SetColors(Color colorA, Color colorB)
     {
-        topColor = top;
-        rightColor = right;
-        bottomColor = bottom;
-        leftColor = left;
+        triangleAColor = colorA;
+        triangleBColor = colorB;
 
         ApplyCurrentColors();
     }
 
-    public void RotateColorsClockwise()
+    public void SwapTriangleColors()
     {
-        Color oldTop = topColor;
-        Color oldRight = rightColor;
-        Color oldBottom = bottomColor;
-        Color oldLeft = leftColor;
-
-        SetColors(
-            oldLeft,
-            oldTop,
-            oldRight,
-            oldBottom);
+        SetColors(triangleBColor, triangleAColor);
     }
 
+    // Kept for compatibility in case anything still calls the old rotation-color methods.
+    public void RotateColorsClockwise()
+    {
+        SwapTriangleColors();
+    }
+
+    // Kept for compatibility in case anything still calls the old rotation-color methods.
     public void RotateColorsCounterClockwise()
     {
-        Color oldTop = topColor;
-        Color oldRight = rightColor;
-        Color oldBottom = bottomColor;
-        Color oldLeft = leftColor;
-
-        SetColors(
-            oldRight,
-            oldBottom,
-            oldLeft,
-            oldTop);
+        SwapTriangleColors();
     }
 
     private void ApplyColor(Renderer targetRenderer, Color color, string rendererName)
